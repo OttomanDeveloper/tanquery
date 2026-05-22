@@ -4,17 +4,24 @@ import '../core/focus_manager.dart' as fm;
 import '../core/notify_manager.dart' as nm;
 import '../core/online_manager.dart' as om;
 import '../core/removable.dart';
+import '../core/subscribable.dart';
 import '../models/query_key.dart';
 import '../models/query_state.dart';
 import '../models/types.dart';
 import '../retryer/retryer.dart';
 import '../utils/structural_sharing.dart';
+import '../utils/skip_token.dart';
 
 typedef QueryFn<T> = Future<T> Function();
 
 abstract class QueryUpdateCallback {
   void onQueryUpdate();
+  bool shouldFetchOnWindowFocus() => false;
+  bool shouldFetchOnReconnect() => false;
+  void refetch({bool cancelRefetch});
 }
+
+typedef CacheNotifyFn = void Function(Object event);
 
 class Query<TData> extends Removable {
   final QueryKey queryKey;
@@ -23,12 +30,15 @@ class Query<TData> extends Removable {
   final fm.FocusManager _focusManager;
   final om.OnlineManager _onlineManager;
 
+  CacheNotifyFn? _cacheNotify;
+
   QueryState<TData> state;
-  final QueryState<TData> _initialState;
+  QueryState<TData> _initialState;
   QueryState<TData>? _revertState;
 
   final List<QueryUpdateCallback> _observers = [];
   Retryer<TData>? _retryer;
+  bool _abortSignalConsumed = false;
 
   void Function()? onRemove;
 
@@ -38,6 +48,8 @@ class Query<TData> extends Removable {
   bool Function(Object)? retryCondition;
   NetworkMode networkMode;
   bool structuralSharing;
+  String? _queryType;
+  Map<String, Object?>? meta;
 
   Query({
     required this.queryKey,
@@ -51,13 +63,18 @@ class Query<TData> extends Removable {
     this.retryCondition,
     this.networkMode = NetworkMode.online,
     this.structuralSharing = true,
+    this.meta,
+    String? queryType,
     QueryState<TData>? state,
+    CacheNotifyFn? cacheNotify,
     nm.NotifyManager? notifyManager,
     fm.FocusManager? focusManager,
     om.OnlineManager? onlineManager,
   })  : _notifyManager = notifyManager ?? nm.notifyManager,
         _focusManager = focusManager ?? fm.focusManager,
         _onlineManager = onlineManager ?? om.onlineManager,
+        _cacheNotify = cacheNotify,
+        _queryType = queryType,
         retryDelay = retryDelay ?? _defaultRetryDelay,
         _initialState =
             state ?? _buildDefaultState(initialData, initialDataUpdatedAt),
@@ -77,6 +94,38 @@ class Query<TData> extends Removable {
       status: hasData ? QueryStatus.success : QueryStatus.pending,
       dataUpdatedAt: hasData ? (initialDataUpdatedAt ?? DateTime.now()) : null,
     );
+  }
+
+  // --- Getters ---
+
+  String? get queryType => _queryType;
+
+  // --- Options ---
+
+  void setOptions({
+    QueryFn<TData>? queryFn,
+    int? retryCount,
+    Duration Function(int)? retryDelay,
+    bool Function(Object)? retryCondition,
+    NetworkMode? networkMode,
+    bool? structuralSharing,
+    Duration? gcTime,
+    Map<String, Object?>? meta,
+    String? queryType,
+  }) {
+    if (queryFn != null) this.queryFn = queryFn;
+    if (retryCount != null) this.retryCount = retryCount;
+    if (retryDelay != null) this.retryDelay = retryDelay;
+    if (retryCondition != null) this.retryCondition = retryCondition;
+    if (networkMode != null) this.networkMode = networkMode;
+    if (structuralSharing != null) this.structuralSharing = structuralSharing;
+    if (gcTime != null) updateGcTime(gcTime);
+    if (meta != null) this.meta = meta;
+    if (queryType != null) _queryType = queryType;
+  }
+
+  void setCacheNotify(CacheNotifyFn? notify) {
+    _cacheNotify = notify;
   }
 
   // --- State Machine ---
@@ -106,6 +155,11 @@ class Query<TData> extends Removable {
       for (final observer in List.of(_observers)) {
         observer.onQueryUpdate();
       }
+      _cacheNotify?.call({
+        'query': this,
+        'type': EventType.updated,
+        'action': action.type,
+      });
     });
   }
 
@@ -120,8 +174,7 @@ class Query<TData> extends Removable {
           fetchFailureCount: 0,
           fetchFailureReason: () => null,
           fetchStatus: canFetchNow ? FetchStatus.fetching : FetchStatus.paused,
-          status:
-              currentState.data == null ? QueryStatus.pending : null,
+          status: currentState.data == null ? QueryStatus.pending : null,
           error: currentState.data == null ? () => null : null,
           fetchMeta: () => action.meta,
         );
@@ -189,6 +242,7 @@ class Query<TData> extends Removable {
     }
 
     _revertState = state;
+    _abortSignalConsumed = false;
     _dispatch(_QueryAction.fetch(meta: meta));
 
     _retryer = Retryer<TData>(
@@ -243,9 +297,6 @@ class Query<TData> extends Removable {
   void destroy() {
     super.destroy();
     _retryer?.cancel(silent: true);
-    try {
-      _retryer?.promise.catchError((_) => null as TData);
-    } catch (_) {}
   }
 
   void reset() {
@@ -255,16 +306,27 @@ class Query<TData> extends Removable {
 
   // --- Staleness ---
 
-  bool isStaleByTime(Duration staleTime) {
+  bool isStaleByTime(Object staleTime) {
     if (state.data == null) return true;
+    if (staleTime is StaleTime && staleTime.isStatic) return false;
     if (state.isInvalidated) return true;
     if (state.dataUpdatedAt == null) return true;
+    final duration =
+        staleTime is StaleTime ? (staleTime.duration ?? Duration.zero) : staleTime as Duration;
     final elapsed = DateTime.now().difference(state.dataUpdatedAt!);
-    return elapsed >= staleTime;
+    return elapsed >= duration;
   }
 
   bool isActive() => _observers.isNotEmpty;
+
+  bool isDisabled() {
+    if (_observers.isNotEmpty) return !isActive();
+    return isSkipToken(queryFn) || !isFetched();
+  }
+
   bool isFetched() => state.dataUpdateCount + state.errorUpdateCount > 0;
+
+  bool isStatic() => false; // Determined by observers at QueryObserver level
 
   // --- Observers ---
 
@@ -272,17 +334,32 @@ class Query<TData> extends Removable {
     if (!_observers.contains(observer)) {
       _observers.add(observer);
       clearGcTimeout();
+      _cacheNotify?.call({
+        'query': this,
+        'type': EventType.observerAdded,
+        'observer': observer,
+      });
     }
   }
 
   void removeObserver(QueryUpdateCallback observer) {
+    if (!_observers.contains(observer)) return;
     _observers.remove(observer);
     if (_observers.isEmpty) {
       if (_retryer != null) {
-        _retryer!.cancelRetry();
+        if (_abortSignalConsumed) {
+          _retryer!.cancel(revert: true);
+        } else {
+          _retryer!.cancelRetry();
+        }
       }
       scheduleGc();
     }
+    _cacheNotify?.call({
+      'query': this,
+      'type': EventType.observerRemoved,
+      'observer': observer,
+    });
   }
 
   int get observerCount => _observers.length;
@@ -291,10 +368,18 @@ class Query<TData> extends Removable {
   // --- Events ---
 
   void onFocus() {
+    final observer = _observers
+        .cast<QueryUpdateCallback?>()
+        .firstWhere((o) => o!.shouldFetchOnWindowFocus(), orElse: () => null);
+    observer?.refetch(cancelRefetch: false);
     _retryer?.resume();
   }
 
   void onOnline() {
+    final observer = _observers
+        .cast<QueryUpdateCallback?>()
+        .firstWhere((o) => o!.shouldFetchOnReconnect(), orElse: () => null);
+    observer?.refetch(cancelRefetch: false);
     _retryer?.resume();
   }
 

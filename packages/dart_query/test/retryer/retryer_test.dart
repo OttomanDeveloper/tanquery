@@ -295,6 +295,105 @@ void main() {
       expect(fnCalled, isFalse);
     });
   });
+  group('Retryer — offlineFirst mode', () {
+    test('starts first attempt when offline, pauses on retry', () async {
+      online.setOnline(false);
+      var attempts = 0;
+      final retryer = createRetryer<String>(
+        fn: () async {
+          attempts++;
+          if (attempts == 1) throw Exception('first fail');
+          return 'ok';
+        },
+        retryCount: 3,
+        networkMode: NetworkMode.offlineFirst,
+      );
+      final future = retryer.start();
+      await Future.delayed(Duration.zero);
+      expect(attempts, 1); // first attempt fired even offline
+
+      // Come back online to allow retry
+      online.setOnline(true);
+      focus.setFocused(true);
+      retryer.resume();
+      final result = await future;
+      expect(result, 'ok');
+      expect(attempts, 2);
+    });
+  });
+
+  group('Retryer — edge cases', () {
+    test('double cancel is safe', () async {
+      final completer = Completer<String>();
+      final retryer = createRetryer<String>(fn: () => completer.future);
+      unawaited(retryer.start().catchError((_) => ''));
+      retryer.cancel();
+      retryer.cancel(); // second cancel is a no-op
+    });
+
+    test('cancel during pause resolves pause and rejects', () async {
+      online.setOnline(false);
+      final retryer = createRetryer<String>(
+        fn: () async => 'data',
+        networkMode: NetworkMode.online,
+      );
+      final future = retryer.start();
+      await Future.delayed(Duration.zero);
+      retryer.cancel();
+      await expectLater(future, throwsA(isA<CancelledError>()));
+    });
+
+    test('resume when not paused is a no-op', () {
+      final retryer = createRetryer<String>(fn: () async => 'data');
+      retryer.resume(); // no pause active, should not throw
+    });
+
+    test('retryDelay is called with correct failureCount', () async {
+      final delays = <int>[];
+      var attempts = 0;
+      final retryer = createRetryer<String>(
+        fn: () async {
+          attempts++;
+          if (attempts <= 2) throw Exception('fail');
+          return 'ok';
+        },
+        retryCount: 3,
+        retryDelay: (count) {
+          delays.add(count);
+          return Duration.zero;
+        },
+      );
+      await retryer.start();
+      expect(delays, [1, 2]);
+    });
+
+    test('initialPromise failure falls back to fn on retry', () async {
+      var fnCalled = false;
+      final retryer = Retryer<String>(
+        fn: () async {
+          fnCalled = true;
+          return 'from fn';
+        },
+        retryCount: 1,
+        retryDelay: _zeroDelay,
+        networkMode: NetworkMode.always,
+        canRun: _alwaysTrue,
+        initialPromise: Future.error(Exception('initial fail')),
+        focusManager: focus,
+        onlineManager: online,
+      );
+      final result = await retryer.start();
+      expect(result, 'from fn');
+      expect(fnCalled, isTrue);
+    });
+
+    test('isAbortSignalConsumed tracks consumption', () {
+      final retryer = createRetryer<String>(fn: () async => 'data');
+      expect(retryer.isAbortSignalConsumed, isFalse);
+      retryer.markAbortSignalConsumed();
+      expect(retryer.isAbortSignalConsumed, isTrue);
+    });
+  });
 }
 
 Duration _zeroDelay(int _) => Duration.zero;
