@@ -1,0 +1,8 @@
+name: dart_query_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.5.0
+
+workspace:
+  - packages/dart_query

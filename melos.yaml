@@ -1,0 +1,13 @@
+name: dart_query_workspace
+packages:
+  - packages/**
+
+scripts:
+  analyze:
+    exec: dart analyze .
+  test:
+    exec: dart test
+  test:core:
+    exec: dart test
+    packageFilters:
+      scope: dart_query
