@@ -21,8 +21,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  dart_query:
-    path: ../dart_query
+  dart_query: ^0.1.0
 
 dev_dependencies:
   flutter_test:
