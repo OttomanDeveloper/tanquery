@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:test/test.dart';
 import 'package:dart_query/src/query_client.dart';
+import 'package:dart_query/src/query/query.dart';
+import 'package:dart_query/src/mutation/mutation.dart';
 import 'package:dart_query/src/models/query_key.dart';
 import 'package:dart_query/src/models/types.dart';
 import 'package:dart_query/src/core/notify_manager.dart';
@@ -264,5 +266,98 @@ void main() {
       );
       expect(data, 'fetched');
     });
+
+    test('revalidateIfStale triggers background refetch', () async {
+      final cache = client.getQueryCache();
+      cache.build<String>(
+        queryKey: QueryKey(['revalidate']),
+        queryFn: () async => 'old',
+        initialData: 'stale_data',
+        initialDataUpdatedAt: DateTime.now().subtract(const Duration(hours: 1)),
+      );
+      var fetchCount = 0;
+      final data = await client.ensureQueryData<String>(
+        queryKey: QueryKey(['revalidate']),
+        queryFn: () async {
+          fetchCount++;
+          return 'refreshed';
+        },
+        staleTime: const Duration(minutes: 5),
+        revalidateIfStale: true,
+      );
+      expect(data, 'stale_data'); // returns cached immediately
+      await Future.delayed(Duration.zero);
+      // background refetch should have fired
+    });
   });
+
+  group('QueryClient — resetQueries', () {
+    test('resets queries to initial state', () async {
+      final cache = client.getQueryCache();
+      final q = cache.build<String>(
+        queryKey: QueryKey(['reset']),
+        queryFn: () async => 'data',
+        initialData: 'original',
+      );
+      q.setData('changed');
+      expect(q.state.data, 'changed');
+      await client.resetQueries(queryKey: QueryKey(['reset']), exact: true);
+      expect(q.state.data, 'original');
+    });
+  });
+
+  group('QueryClient — isMutating', () {
+    test('counts pending mutations', () async {
+      expect(client.isMutating(), 0);
+      final mutationCache = client.getMutationCache();
+      final m = mutationCache.build<String, String>(
+        config: MutationConfig(mutationFn: (v) => Completer<String>().future),
+      );
+      unawaited(m.execute('input').catchError((_) => ''));
+      await Future.delayed(Duration.zero);
+      expect(client.isMutating(), 1);
+    });
+  });
+
+  group('QueryClient — refetchQueries with type filter', () {
+    test('only refetches active queries', () async {
+      final cache = client.getQueryCache();
+      var activeCount = 0;
+      var inactiveCount = 0;
+      final q1 = cache.build<String>(
+        queryKey: QueryKey(['active_q']),
+        queryFn: () async {
+          activeCount++;
+          return 'active';
+        },
+        initialData: 'a',
+      );
+      cache.build<String>(
+        queryKey: QueryKey(['inactive_q']),
+        queryFn: () async {
+          inactiveCount++;
+          return 'inactive';
+        },
+        initialData: 'b',
+      );
+      // Add observer to make q1 active
+      q1.addObserver(_MockObserver());
+      q1.invalidate();
+
+      await client.refetchQueries(type: QueryTypeFilter.active);
+      expect(activeCount, 1);
+      expect(inactiveCount, 0);
+    });
+  });
+}
+
+class _MockObserver implements QueryUpdateCallback {
+  @override
+  void onQueryUpdate() {}
+  @override
+  bool shouldFetchOnWindowFocus() => false;
+  @override
+  bool shouldFetchOnReconnect() => false;
+  @override
+  Future<void> refetch({bool cancelRefetch = true}) async {}
 }

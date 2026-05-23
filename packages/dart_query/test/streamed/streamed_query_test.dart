@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:test/test.dart';
+import 'package:dart_query/src/models/types.dart';
 import 'package:dart_query/src/streamed/streamed_query.dart';
 
 void main() {
@@ -82,6 +83,56 @@ void main() {
       );
 
       await expectLater(queryFn(), throwsException);
+    });
+
+    test('reset mode starts from initialValue', () async {
+      final queryFn = streamedQuery<int, List<int>>(
+        streamFn: () => Stream.fromIterable([4, 5]),
+        reducer: (acc, chunk) => [...acc, chunk],
+        initialValue: [],
+        refetchMode: RefetchMode.reset,
+        getCurrentData: () => [1, 2, 3],
+      );
+      final result = await queryFn();
+      expect(result, [4, 5]); // ignores existing [1,2,3]
+    });
+
+    test('append mode keeps existing data', () async {
+      final queryFn = streamedQuery<int, List<int>>(
+        streamFn: () => Stream.fromIterable([4, 5]),
+        reducer: (acc, chunk) => [...acc, chunk],
+        initialValue: [],
+        refetchMode: RefetchMode.append,
+        getCurrentData: () => [1, 2, 3],
+      );
+      final result = await queryFn();
+      expect(result, [1, 2, 3, 4, 5]); // appends to existing
+    });
+
+    test('replace mode does not call onData per chunk', () async {
+      final updates = <List<int>>[];
+      final queryFn = streamedQuery<int, List<int>>(
+        streamFn: () => Stream.fromIterable([1, 2, 3]),
+        reducer: (acc, chunk) => [...acc, chunk],
+        initialValue: [],
+        refetchMode: RefetchMode.replace,
+        onData: (data) => updates.add(List.from(data)),
+      );
+      final result = await queryFn();
+      expect(result, [1, 2, 3]);
+      expect(updates, isEmpty); // replace mode: no progressive updates
+    });
+
+    test('append falls back to initialValue when no existing data', () async {
+      final queryFn = streamedQuery<int, List<int>>(
+        streamFn: () => Stream.fromIterable([1, 2]),
+        reducer: (acc, chunk) => [...acc, chunk],
+        initialValue: [0],
+        refetchMode: RefetchMode.append,
+        getCurrentData: () => null,
+      );
+      final result = await queryFn();
+      expect(result, [0, 1, 2]); // uses initialValue since no existing
     });
   });
 }

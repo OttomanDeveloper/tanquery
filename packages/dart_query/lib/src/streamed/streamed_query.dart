@@ -10,17 +10,36 @@ QueryFn<TData> streamedQuery<TChunk, TData>({
   required StreamReducer<TData, TChunk> reducer,
   required TData initialValue,
   RefetchMode refetchMode = RefetchMode.reset,
+  TData? Function()? getCurrentData,
   void Function(TData data)? onData,
 }) {
   return () async {
-    var result = initialValue;
+    final existingData = getCurrentData?.call();
     final stream = streamFn();
 
-    await for (final chunk in stream) {
-      result = reducer(result, chunk);
-      onData?.call(result);
-    }
+    switch (refetchMode) {
+      case RefetchMode.reset:
+        var result = initialValue;
+        await for (final chunk in stream) {
+          result = reducer(result, chunk);
+          onData?.call(result);
+        }
+        return result;
 
-    return result;
+      case RefetchMode.append:
+        var result = existingData ?? initialValue;
+        await for (final chunk in stream) {
+          result = reducer(result, chunk);
+          onData?.call(result);
+        }
+        return result;
+
+      case RefetchMode.replace:
+        var result = initialValue;
+        await for (final chunk in stream) {
+          result = reducer(result, chunk);
+        }
+        return result;
+    }
   };
 }

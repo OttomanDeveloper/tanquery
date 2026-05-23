@@ -60,7 +60,8 @@ class DehydratedState {
 
 class DehydrateOptions {
   final bool Function(Query query)? shouldDehydrateQuery;
-  const DehydrateOptions({this.shouldDehydrateQuery});
+  final bool shouldRedactErrors;
+  const DehydrateOptions({this.shouldDehydrateQuery, this.shouldRedactErrors = true});
 }
 
 bool defaultShouldDehydrateQuery(Query query) => query.state.isSuccess;
@@ -68,6 +69,7 @@ bool defaultShouldDehydrateQuery(Query query) => query.state.isSuccess;
 DehydratedState dehydrate(QueryClient client, [DehydrateOptions? options]) {
   final queryCache = client.getQueryCache();
   final shouldDehydrate = options?.shouldDehydrateQuery ?? defaultShouldDehydrateQuery;
+  final shouldRedactErrors = options?.shouldRedactErrors ?? true;
 
   final queries = queryCache
       .getAll()
@@ -79,6 +81,7 @@ DehydratedState dehydrate(QueryClient client, [DehydrateOptions? options]) {
               'data': query.state.data,
               'status': query.state.status.name,
               'dataUpdatedAt': query.state.dataUpdatedAt?.millisecondsSinceEpoch,
+              'error': shouldRedactErrors ? null : query.state.error?.toString(),
               'isInvalidated': query.state.isInvalidated,
             },
             dehydratedAt: DateTime.now(),
@@ -116,13 +119,3 @@ void hydrate(QueryClient client, DehydratedState dehydratedState) {
   }
 }
 
-QueryStatus _parseQueryStatus(String? name) {
-  switch (name) {
-    case 'success':
-      return QueryStatus.success;
-    case 'error':
-      return QueryStatus.error;
-    default:
-      return QueryStatus.pending;
-  }
-}

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:fake_async/fake_async.dart';
 import 'package:test/test.dart';
 import 'package:dart_query/src/query/query.dart';
 import 'package:dart_query/src/query/query_cache.dart';
@@ -347,6 +348,33 @@ void main() {
       observer.subscribe((_) {});
       await Future.delayed(Duration.zero);
       expect(observer.shouldFetchOnReconnect(), isTrue);
+    });
+  });
+
+  group('QueryObserver — refetchInterval', () {
+    test('periodically refetches', () {
+      fakeAsync((async) {
+        var fetchCount = 0;
+        final observer = createObserver<String>(
+          queryKey: QueryKey(['interval']),
+          queryFn: () async {
+            fetchCount++;
+            return 'data_$fetchCount';
+          },
+          refetchInterval: const Duration(seconds: 10),
+        );
+        observer.subscribe((_) {});
+        // Initial fetch
+        async.elapse(Duration.zero);
+        expect(fetchCount, 1);
+        // After 10 seconds, should refetch
+        async.elapse(const Duration(seconds: 10));
+        expect(fetchCount, 2);
+        // After another 10 seconds
+        async.elapse(const Duration(seconds: 10));
+        expect(fetchCount, 3);
+        observer.destroy();
+      });
     });
   });
 
