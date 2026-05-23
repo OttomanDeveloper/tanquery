@@ -4,9 +4,9 @@ description: >-
   stale-while-revalidate, and background refetching. QueryBuilder,
   MutationBuilder, InfiniteQueryBuilder.
 version: 0.1.0
-homepage: https://github.com/AhmedAbouelworworoud/dart_query
-repository: https://github.com/AhmedAbouelworworoud/dart_query
-issue_tracker: https://github.com/AhmedAbouelworworoud/dart_query/issues
+homepage: https://github.com/OttomanDeveloper/dart_query
+repository: https://github.com/OttomanDeveloper/dart_query
+issue_tracker: https://github.com/OttomanDeveloper/dart_query/issues
 topics:
   - flutter
   - cache
