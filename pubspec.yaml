@@ -6,3 +6,4 @@ environment:
 
 workspace:
   - packages/dart_query
+  - packages/dart_query_flutter

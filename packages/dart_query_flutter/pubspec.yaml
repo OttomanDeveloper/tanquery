@@ -1,0 +1,20 @@
+name: dart_query_flutter
+description: Flutter adapter for dart_query. Widget builders and hooks for automatic caching, stale-while-revalidate, and background refetching.
+version: 0.1.0
+homepage: https://github.com/AhmedAbouelworworoud/dart_query
+
+environment:
+  sdk: ^3.5.0
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dart_query:
+    path: ../dart_query
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+resolution: workspace

@@ -3,13 +3,13 @@
   "packages": [
     {
       "name": "_fe_analyzer_shared",
-      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/_fe_analyzer_shared-100.0.0",
+      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/_fe_analyzer_shared-99.0.0",
       "packageUri": "lib/",
-      "languageVersion": "3.11"
+      "languageVersion": "3.9"
     },
     {
       "name": "analyzer",
-      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/analyzer-13.0.0",
+      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/analyzer-12.1.0",
       "packageUri": "lib/",
       "languageVersion": "3.9"
     },
@@ -30,6 +30,12 @@
       "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/boolean_selector-2.1.2",
       "packageUri": "lib/",
       "languageVersion": "3.1"
+    },
+    {
+      "name": "characters",
+      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/characters-1.4.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
     },
     {
       "name": "cli_config",
@@ -80,6 +86,18 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "flutter",
+      "rootUri": "file:///C:/src/flutter/packages/flutter",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "flutter_test",
+      "rootUri": "file:///C:/src/flutter/packages/flutter_test",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
       "name": "frontend_server_client",
       "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/frontend_server_client-4.0.0",
       "packageUri": "lib/",
@@ -110,6 +128,24 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "leak_tracker",
+      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/leak_tracker-11.0.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "leak_tracker_flutter_testing",
+      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/leak_tracker_flutter_testing-3.0.10",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "leak_tracker_testing",
+      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/leak_tracker_testing-3.0.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
       "name": "logging",
       "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/logging-1.3.0",
       "packageUri": "lib/",
@@ -117,13 +153,19 @@
     },
     {
       "name": "matcher",
-      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/matcher-0.12.20",
+      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/matcher-0.12.19",
       "packageUri": "lib/",
-      "languageVersion": "3.10"
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "material_color_utilities",
+      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/material_color_utilities-0.13.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
     },
     {
       "name": "meta",
-      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/meta-1.18.2",
+      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/meta-1.18.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     },
@@ -188,6 +230,12 @@
       "languageVersion": "3.5"
     },
     {
+      "name": "sky_engine",
+      "rootUri": "file:///C:/src/flutter/bin/cache/pkg/sky_engine",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
       "name": "source_map_stack_trace",
       "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/source_map_stack_trace-2.1.2",
       "packageUri": "lib/",
@@ -231,27 +279,33 @@
     },
     {
       "name": "test",
-      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/test-1.31.1",
+      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/test-1.31.0",
       "packageUri": "lib/",
-      "languageVersion": "3.10"
+      "languageVersion": "3.7"
     },
     {
       "name": "test_api",
-      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/test_api-0.7.12",
+      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/test_api-0.7.11",
       "packageUri": "lib/",
-      "languageVersion": "3.10"
+      "languageVersion": "3.7"
     },
     {
       "name": "test_core",
-      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/test_core-0.6.18",
+      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/test_core-0.6.17",
       "packageUri": "lib/",
-      "languageVersion": "3.10"
+      "languageVersion": "3.7"
     },
     {
       "name": "typed_data",
       "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/typed_data-1.4.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
+    },
+    {
+      "name": "vector_math",
+      "rootUri": "file:///C:/Users/postp/AppData/Local/Pub/Cache/hosted/pub.dev/vector_math-2.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
     },
     {
       "name": "vm_service",
@@ -304,6 +358,12 @@
     {
       "name": "dart_query",
       "rootUri": "../packages/dart_query",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
+      "name": "dart_query_flutter",
+      "rootUri": "../packages/dart_query_flutter",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     }
