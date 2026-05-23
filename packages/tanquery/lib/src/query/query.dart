@@ -125,9 +125,13 @@ class Query<TData> extends Removable {
   // --- State Machine ---
 
   TData setData(TData newData, {DateTime? updatedAt, bool manual = false}) {
-    final data = structuralSharing
-        ? replaceEqualDeep(state.data, newData) as TData
-        : newData;
+    final TData data;
+    if (structuralSharing) {
+      final shared = replaceEqualDeep(state.data, newData);
+      data = (shared is TData) ? shared : newData;
+    } else {
+      data = newData;
+    }
     _dispatch(_QueryAction.success(
         data: data, dataUpdatedAt: updatedAt, manual: manual));
     return data;
