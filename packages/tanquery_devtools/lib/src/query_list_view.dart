@@ -24,6 +24,26 @@ class QueryListView extends StatelessWidget {
           .where((q) => q.queryKey.parts.join(', ').toLowerCase().contains(filterText.toLowerCase()))
           .toList();
     }
+    if (statusFilter != null && statusFilter!.isNotEmpty) {
+      filtered = filtered.where((q) {
+        switch (statusFilter) {
+          case 'fresh':
+            return q.state.status == QueryStatus.success && !q.isStaleByTime(Duration.zero) && q.isActive();
+          case 'stale':
+            return q.isStaleByTime(Duration.zero) && q.isActive();
+          case 'fetching':
+            return q.state.fetchStatus == FetchStatus.fetching;
+          case 'paused':
+            return q.state.fetchStatus == FetchStatus.paused;
+          case 'error':
+            return q.state.status == QueryStatus.error;
+          case 'inactive':
+            return !q.isActive();
+          default:
+            return true;
+        }
+      }).toList();
+    }
 
     if (filtered.isEmpty) {
       return const Center(

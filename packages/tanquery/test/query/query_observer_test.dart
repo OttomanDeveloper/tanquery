@@ -52,7 +52,6 @@ void main() {
       networkMode: networkMode,
       notifyManager: notify,
       focusManager: focus,
-      onlineManager: online,
     );
   }
 

@@ -387,12 +387,6 @@ void main() {
       expect(fnCalled, isTrue);
     });
 
-    test('isAbortSignalConsumed tracks consumption', () {
-      final retryer = createRetryer<String>(fn: () async => 'data');
-      expect(retryer.isAbortSignalConsumed, isFalse);
-      retryer.markAbortSignalConsumed();
-      expect(retryer.isAbortSignalConsumed, isTrue);
-    });
   });
 }
 

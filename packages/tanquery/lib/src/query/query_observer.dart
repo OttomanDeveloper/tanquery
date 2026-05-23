@@ -1,7 +1,6 @@
 import 'dart:async';
 import '../core/focus_manager.dart' as fm;
 import '../core/notify_manager.dart' as nm;
-import '../core/online_manager.dart' as om;
 import '../core/subscribable.dart';
 import '../models/query_key.dart';
 import '../models/query_state.dart';
@@ -64,8 +63,6 @@ class QueryObserver<TData> extends Subscribable<Function> implements QueryUpdate
   final QueryCache _cache;
   final nm.NotifyManager _notifyManager;
   final fm.FocusManager _focusManager;
-  // ignore: unused_field
-  final om.OnlineManager _onlineManager;
 
   QueryKey _queryKey;
   QueryFn<TData> _queryFn;
@@ -107,7 +104,6 @@ class QueryObserver<TData> extends Subscribable<Function> implements QueryUpdate
     NetworkMode networkMode = NetworkMode.online,
     nm.NotifyManager? notifyManager,
     fm.FocusManager? focusManager,
-    om.OnlineManager? onlineManager,
   })  : _cache = cache,
         _queryKey = queryKey,
         _queryFn = queryFn,
@@ -121,8 +117,7 @@ class QueryObserver<TData> extends Subscribable<Function> implements QueryUpdate
         _retryCount = retryCount,
         _networkMode = networkMode,
         _notifyManager = notifyManager ?? nm.notifyManager,
-        _focusManager = focusManager ?? fm.focusManager,
-        _onlineManager = onlineManager ?? om.onlineManager {
+        _focusManager = focusManager ?? fm.focusManager {
     _updateQuery();
     updateResult();
   }

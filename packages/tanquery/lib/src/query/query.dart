@@ -37,7 +37,6 @@ class Query<TData> extends Removable {
 
   final List<QueryUpdateCallback> _observers = [];
   Retryer<TData>? _retryer;
-  bool _abortSignalConsumed = false;
 
   void Function()? onRemove;
 
@@ -236,7 +235,6 @@ class Query<TData> extends Removable {
     }
 
     _revertState = state;
-    _abortSignalConsumed = false;
     _dispatch(_QueryAction.fetch(meta: meta));
 
     _retryer = Retryer<TData>(
@@ -263,11 +261,9 @@ class Query<TData> extends Removable {
 
     try {
       final data = await _retryer!.start();
-      _abortSignalConsumed = _retryer!.isAbortSignalConsumed;
       setData(data);
       return data;
     } catch (error) {
-      _abortSignalConsumed = _retryer?.isAbortSignalConsumed ?? false;
       if (error is CancelledError) {
         if (error.silent) return _retryer!.promise;
         if (error.revert) {
@@ -340,13 +336,7 @@ class Query<TData> extends Removable {
     if (!_observers.contains(observer)) return;
     _observers.remove(observer);
     if (_observers.isEmpty) {
-      if (_retryer != null) {
-        if (_abortSignalConsumed) {
-          _retryer!.cancel(revert: true);
-        } else {
-          _retryer!.cancelRetry();
-        }
-      }
+      _retryer?.cancelRetry();
       scheduleGc();
     }
     _cacheNotify?.call({

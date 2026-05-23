@@ -2,7 +2,7 @@ name: tanquery_devtools
 description: >-
   Visual devtools overlay for tanquery. Inspect query cache, mutation log,
   and query states in real-time with a floating panel overlay.
-version: 0.4.0
+version: 0.5.0
 homepage: https://github.com/OttomanDeveloper/tanquery
 repository: https://github.com/OttomanDeveloper/tanquery
 issue_tracker: https://github.com/OttomanDeveloper/tanquery/issues
@@ -20,8 +20,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  tanquery: ^0.4.0
-  tanquery_flutter: ^0.4.0
+  tanquery: ^0.5.0
+  tanquery_flutter: ^0.5.0
 
 dev_dependencies:
   flutter_test:

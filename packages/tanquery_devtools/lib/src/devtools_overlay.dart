@@ -26,6 +26,7 @@ class _DartQueryDevtoolsState extends State<DartQueryDevtools> {
   String _filterText = '';
   Unsubscribe? _queryCacheUnsub;
   Unsubscribe? _mutationCacheUnsub;
+  String? _statusFilter;
 
   @override
   void didChangeDependencies() {
@@ -141,7 +142,7 @@ class _DartQueryDevtoolsState extends State<DartQueryDevtools> {
               ),
 
               // Filter
-              if (_tabIndex == 0 && _selectedQuery == null)
+              if (_tabIndex == 0 && _selectedQuery == null) ...[
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: TextField(
@@ -156,6 +157,38 @@ class _DartQueryDevtoolsState extends State<DartQueryDevtools> {
                     style: const TextStyle(fontSize: 12),
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (final status in [null, 'fresh', 'stale', 'fetching', 'paused', 'error', 'inactive'])
+                          Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: GestureDetector(
+                              onTap: () => setState(() => _statusFilter = status == _statusFilter ? null : status),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: _statusFilter == status ? Colors.deepPurple : Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  status ?? 'all',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: _statusFilter == status ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
 
               // Content
               Expanded(
@@ -185,6 +218,7 @@ class _DartQueryDevtoolsState extends State<DartQueryDevtools> {
                             queries: queryCache.getAll(),
                             onQueryTap: (q) => setState(() => _selectedQuery = q),
                             filterText: _filterText,
+                            statusFilter: _statusFilter,
                           )
                     : MutationLogView(mutations: mutationCache.getAll()),
               ),

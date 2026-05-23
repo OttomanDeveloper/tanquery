@@ -24,14 +24,7 @@ class Retryer<TData> {
   int _failureCount = 0;
   bool _isRetryCancelled = false;
   bool _isResolved = false;
-  bool _abortSignalConsumed = false;
   Completer<void>? _pauseCompleter;
-
-  bool get isAbortSignalConsumed => _abortSignalConsumed;
-
-  void markAbortSignalConsumed() {
-    _abortSignalConsumed = true;
-  }
 
   Retryer({
     required this.fn,
