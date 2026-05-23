@@ -26,8 +26,8 @@ class QueryCache extends Subscribable<QueryCacheListener> {
   final Map<String, Query> _queries = {};
   final nm.NotifyManager _notifyManager;
 
-  final void Function(Object data, Query query)? onSuccess;
-  final void Function(Object error, Query query)? onError;
+  final void Function(Object? data, Query query)? onSuccess;
+  final void Function(Object? error, Query query)? onError;
   final void Function(Object? data, Object? error, Query query)? onSettled;
 
   QueryCache({
@@ -217,10 +217,10 @@ class QueryCache extends Subscribable<QueryCacheListener> {
       // Fire config callbacks on query state changes
       if (type == EventType.updated) {
         if (query.state.isSuccess) {
-          onSuccess?.call(query.state.data!, query);
+          onSuccess?.call(query.state.data, query);
         }
         if (query.state.isError) {
-          onError?.call(query.state.error!, query);
+          onError?.call(query.state.error, query);
         }
         if (query.state.isSuccess || query.state.isError) {
           onSettled?.call(query.state.data, query.state.error, query);

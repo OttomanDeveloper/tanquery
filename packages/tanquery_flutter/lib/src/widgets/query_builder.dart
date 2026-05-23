@@ -57,10 +57,18 @@ class _QueryBuilderState<T> extends State<QueryBuilder<T>> {
   @override
   void didUpdateWidget(QueryBuilder<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.queryKey != widget.queryKey ||
+    final changed = oldWidget.queryKey != widget.queryKey ||
         oldWidget.staleTime != widget.staleTime ||
         oldWidget.enabled != widget.enabled ||
-        oldWidget.refetchInterval != widget.refetchInterval) {
+        oldWidget.refetchInterval != widget.refetchInterval ||
+        oldWidget.retryCount != widget.retryCount ||
+        oldWidget.networkMode != widget.networkMode ||
+        oldWidget.gcTime != widget.gcTime ||
+        !identical(oldWidget.queryFn, widget.queryFn) ||
+        !identical(oldWidget.select, widget.select) ||
+        !identical(oldWidget.placeholderData, widget.placeholderData) ||
+        !identical(oldWidget.placeholderDataFn, widget.placeholderDataFn);
+    if (changed) {
       _unsubscribe?.call();
       _observer?.destroy();
       _createObserver();

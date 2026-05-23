@@ -68,7 +68,9 @@ class _QueriesBuilderState extends State<QueriesBuilder> {
   bool _queriesChanged(List<QueryConfig> old, List<QueryConfig> current) {
     if (old.length != current.length) return true;
     for (var i = 0; i < old.length; i++) {
-      if (old[i].key != current[i].key) return true;
+      if (old[i].key != current[i].key ||
+          old[i].staleTime != current[i].staleTime ||
+          old[i].enabled != current[i].enabled) return true;
     }
     return false;
   }

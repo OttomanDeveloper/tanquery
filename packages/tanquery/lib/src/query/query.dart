@@ -123,10 +123,6 @@ class Query<TData> extends Removable {
     if (queryType != null) _queryType = queryType;
   }
 
-  void setCacheNotify(CacheNotifyFn? notify) {
-    _cacheNotify = notify;
-  }
-
   // --- State Machine ---
 
   TData setData(TData newData, {DateTime? updatedAt, bool manual = false}) {
@@ -268,9 +264,11 @@ class Query<TData> extends Removable {
 
     try {
       final data = await _retryer!.start();
+      _abortSignalConsumed = _retryer!.isAbortSignalConsumed;
       setData(data);
       return data;
     } catch (error) {
+      _abortSignalConsumed = _retryer?.isAbortSignalConsumed ?? false;
       if (error is CancelledError) {
         if (error.silent) return _retryer!.promise;
         if (error.revert) {
@@ -319,13 +317,11 @@ class Query<TData> extends Removable {
   bool isActive() => _observers.isNotEmpty;
 
   bool isDisabled() {
-    if (_observers.isNotEmpty) return !isActive();
+    if (_observers.isNotEmpty) return false;
     return isSkipToken(queryFn) || !isFetched();
   }
 
   bool isFetched() => state.dataUpdateCount + state.errorUpdateCount > 0;
-
-  bool isStatic() => false; // Determined by observers at QueryObserver level
 
   // --- Observers ---
 

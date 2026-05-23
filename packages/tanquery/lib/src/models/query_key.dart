@@ -2,7 +2,7 @@ import '../utils/hash_key.dart';
 
 class QueryKey {
   final List<Object?> parts;
-  late final String queryHash;
+  final String queryHash;
 
   QueryKey(this.parts) : queryHash = hashQueryKey(parts);
 

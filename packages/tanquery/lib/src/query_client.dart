@@ -183,11 +183,7 @@ class QueryClient {
       }
     });
 
-    if (refetchType != QueryTypeFilter.all) {
-      await refetchQueries(queryKey: queryKey, exact: exact, type: refetchType);
-    } else {
-      await refetchQueries(queryKey: queryKey, exact: exact);
-    }
+    await refetchQueries(queryKey: queryKey, exact: exact, type: refetchType);
   }
 
   Future<void> refetchQueries({
@@ -202,12 +198,10 @@ class QueryClient {
 
     final futures = _notifyManager.batch(() {
       return queries.map((query) {
-        var future = query.fetch(cancelRefetch: cancelRefetch);
-        future = future.catchError((_) => null);
         if (query.state.fetchStatus == FetchStatus.paused) {
-          return Future.value();
+          return Future<void>.value();
         }
-        return future;
+        return query.fetch(cancelRefetch: cancelRefetch).catchError((_) => null);
       }).toList();
     });
 

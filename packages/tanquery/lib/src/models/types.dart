@@ -6,8 +6,6 @@ enum MutationStatus { idle, pending, success, error }
 
 enum NetworkMode { online, always, offlineFirst }
 
-enum FetchDirection { forward, backward }
-
 enum RefetchMode { reset, append, replace }
 
 enum QueryActionType { fetch, success, error, invalidate, pause, resume, failed, setState }
@@ -20,8 +18,6 @@ enum EventType {
   updated,
   observerAdded,
   observerRemoved,
-  observerResultsUpdated,
-  observerOptionsUpdated,
 }
 
 enum QueryTypeFilter { all, active, inactive }
@@ -34,7 +30,4 @@ class StaleTime {
 
   factory StaleTime(Duration duration) => StaleTime._(duration, false);
   static const StaleTime static_ = StaleTime._(null, true);
-  static const StaleTime zero = StaleTime._(Duration.zero, false);
-
-  bool get isZero => !isStatic && duration == Duration.zero;
 }

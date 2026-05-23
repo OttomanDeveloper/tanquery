@@ -48,6 +48,7 @@ class _InfiniteQueryBuilderState<TPage, TParam>
     extends State<InfiniteQueryBuilder<TPage, TParam>> {
   QueryObserver<InfiniteData<TPage, TParam>>? _observer;
   Unsubscribe? _unsubscribe;
+  bool _isFetchingPage = false;
 
   @override
   void didChangeDependencies() {
@@ -61,7 +62,10 @@ class _InfiniteQueryBuilderState<TPage, TParam>
   @override
   void didUpdateWidget(InfiniteQueryBuilder<TPage, TParam> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.queryKey != widget.queryKey) {
+    if (oldWidget.queryKey != widget.queryKey ||
+        oldWidget.staleTime != widget.staleTime ||
+        oldWidget.enabled != widget.enabled ||
+        oldWidget.retryCount != widget.retryCount) {
       _unsubscribe?.call();
       _observer?.destroy();
       _createObserver();
@@ -72,6 +76,7 @@ class _InfiniteQueryBuilderState<TPage, TParam>
   @override
   void dispose() {
     _unsubscribe?.call();
+    _observer?.destroy();
     super.dispose();
   }
 
@@ -80,7 +85,7 @@ class _InfiniteQueryBuilderState<TPage, TParam>
     _observer = QueryObserver<InfiniteData<TPage, TParam>>(
       cache: client.getQueryCache(),
       queryKey: widget.queryKey,
-      queryFn: _buildInfiniteQueryFn(),
+      queryFn: _buildQueryFn(),
       staleTime: widget.staleTime,
       gcTime: widget.gcTime,
       enabled: widget.enabled,
@@ -88,7 +93,7 @@ class _InfiniteQueryBuilderState<TPage, TParam>
     );
   }
 
-  QueryFn<InfiniteData<TPage, TParam>> _buildInfiniteQueryFn() {
+  QueryFn<InfiniteData<TPage, TParam>> _buildQueryFn() {
     return () async {
       final firstPage = await widget.queryFn(widget.initialPageParam);
       return InfiniteData<TPage, TParam>(
@@ -99,64 +104,63 @@ class _InfiniteQueryBuilderState<TPage, TParam>
   }
 
   void _fetchNextPage() {
+    if (!mounted || _isFetchingPage) return;
     final data = _observer?.currentResult.data;
     if (data == null || data.pages.isEmpty) return;
+
     final nextParam = widget.getNextPageParam?.call(
-      data.pages.last,
-      data.pages,
-      data.pageParams.last,
-      data.pageParams,
+      data.pages.last, data.pages, data.pageParams.last, data.pageParams,
     );
     if (nextParam == null) return;
 
-    final client = DartQuery.of(context);
-    final cache = client.getQueryCache();
-    final query = cache.find(queryKey: widget.queryKey);
-    if (query == null) return;
-
-    final currentData = data;
-    query.setData(
-      InfiniteData<TPage, TParam>(
-        pages: currentData.pages,
-        pageParams: currentData.pageParams,
-      ),
-    );
-
+    _isFetchingPage = true;
     widget.queryFn(nextParam).then((page) {
-      query.setData(
-        InfiniteData<TPage, TParam>(
-          pages: [...currentData.pages, page],
-          pageParams: [...currentData.pageParams, nextParam],
-        ),
-      );
-    });
+      if (!mounted) return;
+      final current = _observer?.currentResult.data;
+      if (current == null) return;
+
+      final client = DartQuery.of(context);
+      final query = client.getQueryCache().find(queryKey: widget.queryKey);
+      if (query == null) return;
+
+      var newPages = [...current.pages, page];
+      var newParams = [...current.pageParams, nextParam];
+      if (widget.maxPages != null && newPages.length > widget.maxPages!) {
+        newPages = newPages.sublist(1);
+        newParams = newParams.sublist(1);
+      }
+      query.setData(InfiniteData<TPage, TParam>(pages: newPages, pageParams: newParams));
+    }).catchError((_) {}).whenComplete(() => _isFetchingPage = false);
   }
 
   void _fetchPreviousPage() {
+    if (!mounted || _isFetchingPage) return;
     final data = _observer?.currentResult.data;
     if (data == null || data.pages.isEmpty) return;
+
     final prevParam = widget.getPreviousPageParam?.call(
-      data.pages.first,
-      data.pages,
-      data.pageParams.first,
-      data.pageParams,
+      data.pages.first, data.pages, data.pageParams.first, data.pageParams,
     );
     if (prevParam == null) return;
 
-    final client = DartQuery.of(context);
-    final cache = client.getQueryCache();
-    final query = cache.find(queryKey: widget.queryKey);
-    if (query == null) return;
-
-    final currentData = data;
+    _isFetchingPage = true;
     widget.queryFn(prevParam).then((page) {
-      query.setData(
-        InfiniteData<TPage, TParam>(
-          pages: [page, ...currentData.pages],
-          pageParams: [prevParam, ...currentData.pageParams],
-        ),
-      );
-    });
+      if (!mounted) return;
+      final current = _observer?.currentResult.data;
+      if (current == null) return;
+
+      final client = DartQuery.of(context);
+      final query = client.getQueryCache().find(queryKey: widget.queryKey);
+      if (query == null) return;
+
+      var newPages = [page, ...current.pages];
+      var newParams = [prevParam, ...current.pageParams];
+      if (widget.maxPages != null && newPages.length > widget.maxPages!) {
+        newPages = newPages.sublist(0, newPages.length - 1);
+        newParams = newParams.sublist(0, newParams.length - 1);
+      }
+      query.setData(InfiniteData<TPage, TParam>(pages: newPages, pageParams: newParams));
+    }).catchError((_) {}).whenComplete(() => _isFetchingPage = false);
   }
 
   void _subscribe() {
@@ -168,11 +172,6 @@ class _InfiniteQueryBuilderState<TPage, TParam>
   @override
   Widget build(BuildContext context) {
     if (_observer == null) return const SizedBox.shrink();
-    return widget.builder(
-      context,
-      _observer!.currentResult,
-      _fetchNextPage,
-      _fetchPreviousPage,
-    );
+    return widget.builder(context, _observer!.currentResult, _fetchNextPage, _fetchPreviousPage);
   }
 }

@@ -21,7 +21,7 @@ class QueryListView extends StatelessWidget {
     var filtered = queries;
     if (filterText.isNotEmpty) {
       filtered = filtered
-          .where((q) => q.queryHash.toLowerCase().contains(filterText.toLowerCase()))
+          .where((q) => q.queryKey.parts.join(', ').toLowerCase().contains(filterText.toLowerCase()))
           .toList();
     }
 
