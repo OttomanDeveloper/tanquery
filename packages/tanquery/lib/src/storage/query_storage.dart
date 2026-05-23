@@ -2,7 +2,7 @@
 ///
 /// Implement this to store dehydrated query state in SharedPreferences,
 /// Hive, SQLite, or any other storage backend.
-abstract class QueryStorage {
+abstract interface class QueryStorage {
   /// Writes [data] under [key], replacing any existing entry.
   Future<void> save(String key, Map<String, dynamic> data);
 

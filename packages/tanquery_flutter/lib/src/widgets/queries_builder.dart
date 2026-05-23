@@ -6,7 +6,7 @@ import '../provider.dart';
 ///
 /// Groups a query key, fetch function, and basic options into one object
 /// so multiple queries can be declared as a list.
-class QueryConfig<T> {
+final class QueryConfig<T> {
   /// Unique key identifying this query in the cache.
   final QueryKey key;
 

@@ -13,7 +13,7 @@ typedef MutationFn<TData, TVariables> = Future<TData> Function(TVariables variab
 /// Groups mutations so that only one mutation per scope runs at a time.
 ///
 /// Mutations sharing the same [id] are queued and executed sequentially.
-class MutationScope {
+final class MutationScope {
   /// Identifier for this scope. Mutations with the same id share a queue.
   final String id;
   const MutationScope({required this.id});
@@ -23,7 +23,7 @@ class MutationScope {
 ///
 /// Bundles the mutation function with its retry, scoping, and lifecycle
 /// callback options.
-class MutationConfig<TData, TVariables> {
+final class MutationConfig<TData, TVariables> {
   /// The function that performs the mutation.
   final MutationFn<TData, TVariables> mutationFn;
 
@@ -89,7 +89,7 @@ typedef MutationCacheCallback = void Function(Map<String, Object?> event);
 /// These fire before the per-mutation config callbacks, giving the cache
 /// a chance to react globally to every mutation (e.g. for logging or
 /// invalidation).
-class CacheLevelCallbacks {
+final class CacheLevelCallbacks {
   /// Called before the mutation function runs.
   final Future<void> Function(Object? variables, Object mutation)? onMutate;
 

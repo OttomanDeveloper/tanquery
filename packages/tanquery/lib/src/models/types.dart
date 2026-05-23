@@ -143,7 +143,7 @@ enum QueryTypeFilter {
 ///
 /// Wrap a [Duration] for normal staleness, or use [StaleTime.static_]
 /// to mark data as never stale.
-class StaleTime {
+final class StaleTime {
   /// The staleness duration, or null if data never goes stale.
   final Duration? duration;
 

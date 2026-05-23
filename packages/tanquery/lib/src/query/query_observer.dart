@@ -13,7 +13,7 @@ import 'query_cache.dart';
 ///
 /// Combines raw [QueryState] fields with derived booleans (like [isLoading],
 /// [isRefetching]) and observer-specific state like [isPlaceholderData].
-class QueryObserverResult<TData> {
+final class QueryObserverResult<TData> {
   /// The latest successfully fetched data, or null if no data has arrived.
   final TData? data;
 

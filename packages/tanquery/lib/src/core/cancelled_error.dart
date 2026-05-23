@@ -1,5 +1,5 @@
 /// Thrown when a query or mutation is cancelled before completing.
-class CancelledError extends Error {
+final class CancelledError extends Error {
   /// Whether the state should revert to the previous value.
   final bool revert;
 

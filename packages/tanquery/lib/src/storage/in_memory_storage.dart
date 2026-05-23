@@ -4,7 +4,7 @@ import 'query_storage.dart';
 ///
 /// Useful for tests and as a default when no durable storage is configured.
 /// All data is lost when the process exits.
-class InMemoryQueryStorage implements QueryStorage {
+final class InMemoryQueryStorage implements QueryStorage {
   final Map<String, Map<String, dynamic>> _store = {};
 
   @override

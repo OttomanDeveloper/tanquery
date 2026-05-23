@@ -97,7 +97,7 @@ class _DartQueryInherited extends InheritedWidget {
 }
 
 /// Static accessor for the nearest [QueryClient] in the widget tree.
-class DartQuery {
+abstract final class DartQuery {
   /// Looks up the nearest [QueryClient] from the widget tree.
   ///
   /// Throws a [FlutterError] with setup instructions if no

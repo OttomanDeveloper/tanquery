@@ -6,7 +6,7 @@ import '../query_client.dart';
 ///
 /// Created by [dehydrate] and consumed by [hydrate] to move cache state
 /// into and out of persistent storage.
-class DehydratedQuery {
+final class DehydratedQuery {
   /// Hash string that uniquely identifies this query in the cache.
   final String queryHash;
 
@@ -55,7 +55,7 @@ class DehydratedQuery {
 
 /// Collection of [DehydratedQuery] snapshots representing the full
 /// dehydrated cache state.
-class DehydratedState {
+final class DehydratedState {
   /// The dehydrated queries in this state snapshot.
   final List<DehydratedQuery> queries;
 
@@ -77,7 +77,7 @@ class DehydratedState {
 }
 
 /// Controls which queries get dehydrated and whether error details are kept.
-class DehydrateOptions {
+final class DehydrateOptions {
   /// Filter predicate. Only queries where this returns true are included.
   /// Defaults to [defaultShouldDehydrateQuery] when null.
   final bool Function(Query query)? shouldDehydrateQuery;

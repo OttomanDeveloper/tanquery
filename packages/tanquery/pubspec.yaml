@@ -3,7 +3,7 @@ description: >-
   TanStack Query for Dart. Automatic caching, stale-while-revalidate,
   background refetching, mutations with optimistic updates, infinite queries.
   Pure Dart - no Flutter dependency.
-version: 0.7.1
+version: 0.8.0
 homepage: https://github.com/OttomanDeveloper/tanquery
 repository: https://github.com/OttomanDeveloper/tanquery
 issue_tracker: https://github.com/OttomanDeveloper/tanquery/issues

@@ -12,7 +12,7 @@ import 'query.dart';
 ///
 /// Listeners receive these when queries are added, removed, updated,
 /// or when observers attach/detach.
-class QueryCacheEvent {
+final class QueryCacheEvent {
   /// What happened (added, removed, updated, observerAdded, observerRemoved).
   final EventType type;
 

@@ -18,7 +18,7 @@ typedef QueryFn<T> = Future<T> Function();
 ///
 /// Implemented by [QueryObserver] to receive notifications when a query's
 /// state transitions (data arrival, errors, refetches).
-abstract class QueryUpdateCallback {
+abstract interface class QueryUpdateCallback {
   /// Called whenever the query's state changes.
   void onQueryUpdate();
 

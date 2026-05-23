@@ -1,3 +1,8 @@
+## 0.8.0
+
+### Improvements
+- Updated dependencies to `tanquery: ^0.8.0` and `tanquery_flutter: ^0.8.0`.
+
 ## 0.7.1
 
 ### Documentation

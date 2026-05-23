@@ -4,7 +4,7 @@ import 'types.dart';
 ///
 /// Tracks the [data] returned on success, any [error], retry counts,
 /// and the [variables] that were passed to the mutation function.
-class MutationState<TData> {
+final class MutationState<TData> {
   /// The data returned by the mutation function, or null if not yet completed.
   final TData? data;
 

@@ -1,3 +1,10 @@
+## 0.8.0
+
+### Type Safety
+- Added `final` class modifier to all data/value types: `QueryKey`, `QueryState`, `MutationState`, `InfiniteData`, `StaleTime`, `CancelledError`, `QueryCacheEvent`, `MutationCacheEvent`, `QueryObserverResult`, `MutationScope`, `MutationConfig`, `CacheLevelCallbacks`, `DehydratedQuery`, `DehydratedState`, `DehydrateOptions`, `InMemoryQueryStorage`.
+- Added `abstract interface` class modifier to `QueryStorage` and `QueryUpdateCallback` to enforce implement-only contracts.
+- These modifiers tell Dart's type system how each class is meant to be used. `final` classes can't be extended or implemented outside the package. `interface` classes can be implemented but not extended.
+
 ## 0.7.1
 
 ### Documentation

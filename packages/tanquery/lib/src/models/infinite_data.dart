@@ -3,7 +3,7 @@
 /// Each element in [pages] corresponds to one page of results.
 /// The matching element in [pageParams] holds the parameter used to fetch
 /// that page (e.g. a cursor or page number).
-class InfiniteData<TPage, TParam> {
+final class InfiniteData<TPage, TParam> {
   /// The fetched pages in order.
   final List<TPage> pages;
 

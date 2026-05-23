@@ -7,7 +7,7 @@ import '../models/types.dart';
 import 'mutation.dart';
 
 /// Describes a lifecycle event emitted by the [MutationCache].
-class MutationCacheEvent {
+final class MutationCacheEvent {
   /// What happened (added, removed, updated, observerAdded, observerRemoved).
   final EventType type;
 

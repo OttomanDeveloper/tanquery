@@ -1,3 +1,10 @@
+## 0.8.0
+
+### Type Safety
+- Added `final` class modifier to `QueryConfig` (data class, not meant to be extended).
+- Added `abstract final` class modifier to `DartQuery` (utility class with static method only, not meant to be instantiated or extended).
+- Updated dependency to `tanquery: ^0.8.0`.
+
 ## 0.7.1
 
 ### Documentation

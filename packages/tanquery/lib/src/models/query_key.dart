@@ -5,7 +5,7 @@ import '../utils/hash_key.dart';
 /// Built from a list of [parts] that are hashed into a single [queryHash]
 /// string. Two keys with the same parts produce the same hash and are
 /// considered equal.
-class QueryKey {
+final class QueryKey {
   /// The segments that make up this key.
   final List<Object?> parts;
 

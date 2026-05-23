@@ -4,7 +4,7 @@ import 'types.dart';
 ///
 /// Holds the fetched [data], any [error], status flags, and metadata
 /// about when data and errors were last updated.
-class QueryState<TData> {
+final class QueryState<TData> {
   /// The data returned by the query function, or null if not yet fetched.
   final TData? data;
 
