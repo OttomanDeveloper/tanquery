@@ -1,3 +1,9 @@
+## 0.7.0
+
+### Bug Fixes
+- **Overlay widget error fixed** -- Wrapped devtools panel in its own `Overlay` widget. Fixes "No Overlay widget found" crash when placed inside `MaterialApp.builder` (above Navigator).
+- **Refetch action error fixed** -- Replaced `.catchError` / `.ignore()` with safe `.then((_) {}, onError: (_) {})` pattern.
+
 ## 0.6.0
 
 ### Improvements

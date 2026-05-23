@@ -1,3 +1,10 @@
+## 0.7.0
+
+### Bug Fixes
+- **Structural sharing cast failure fixed** -- `replaceEqualDeep` returned `List<Object?>` instead of `List<T>` when queries were accessed through untyped `Query` references (e.g., from `invalidateQueries` → `refetchQueries` → `findAll`). Now safely checks `shared is TData` before casting, falling back to original typed data.
+- **`catchError` type mismatch fixed** -- Replaced all `catchError((_) => null)` and `.ignore()` with `async/try/catch` or `.then((_) {}, onError: (_) {})` patterns. Prevents "The error handler of Future.catchError must return a value of the future's type" runtime error.
+- **`refetchQueries` no longer leaks futures** -- Uses `async/try/catch` instead of chained `.then().catchError()`.
+
 ## 0.6.0
 
 ### Bug Fixes

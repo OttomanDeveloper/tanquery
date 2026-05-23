@@ -1,3 +1,8 @@
+## 0.7.0
+
+### Bug Fixes
+- **InfiniteQueryBuilder `catchError` type mismatch fixed** -- Replaced `.catchError((_) {})` with `.then((_) {}, onError: (_) {})` to prevent Future type mismatch errors on page fetch failures.
+
 ## 0.6.0
 
 ### Bug Fixes
