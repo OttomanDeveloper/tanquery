@@ -203,11 +203,11 @@ class QueryClient {
         .where((q) => !q.isDisabled());
 
     final futures = _notifyManager.batch(() {
-      return queries.map((query) {
-        if (query.state.fetchStatus == FetchStatus.paused) {
-          return Future<void>.value();
-        }
-        return query.fetch(cancelRefetch: cancelRefetch).then((_) {}).catchError((_) {});
+      return queries.map((query) async {
+        if (query.state.fetchStatus == FetchStatus.paused) return;
+        try {
+          await query.fetch(cancelRefetch: cancelRefetch);
+        } catch (_) {}
       }).toList();
     });
 
