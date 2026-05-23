@@ -216,7 +216,7 @@ class _DartQueryDevtoolsState extends State<DartQueryDevtools> {
                               setState(() => _selectedQuery = null);
                             },
                             onRefetch: () {
-                              _selectedQuery!.fetch().catchError((_) => null);
+                              _selectedQuery!.fetch().then((_) {}).catchError((_) {});
                               setState(() {});
                             },
                             onReset: () {

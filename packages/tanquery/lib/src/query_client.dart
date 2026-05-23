@@ -207,7 +207,7 @@ class QueryClient {
         if (query.state.fetchStatus == FetchStatus.paused) {
           return Future<void>.value();
         }
-        return query.fetch(cancelRefetch: cancelRefetch).catchError((_) => null);
+        return query.fetch(cancelRefetch: cancelRefetch).then((_) {}).catchError((_) {});
       }).toList();
     });
 
