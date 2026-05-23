@@ -71,18 +71,24 @@ class _DartQueryDevtoolsState extends State<DartQueryDevtools> {
   Widget build(BuildContext context) {
     if (!widget.enabled) return widget.child;
 
-    return Stack(
-      children: [
-        widget.child,
-        if (_isOpen) _buildPanel(context),
-        Positioned(
-          right: 16,
-          bottom: 16,
-          child: FloatingActionButton.small(
-            heroTag: 'tanquery_devtools',
-            onPressed: () => setState(() => _isOpen = !_isOpen),
-            backgroundColor: _isOpen ? Colors.red : Colors.deepPurple,
-            child: Icon(_isOpen ? Icons.close : Icons.bug_report, size: 20),
+    return Overlay(
+      initialEntries: [
+        OverlayEntry(
+          builder: (_) => Stack(
+            children: [
+              widget.child,
+              if (_isOpen) _buildPanel(context),
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: FloatingActionButton.small(
+                  heroTag: 'tanquery_devtools',
+                  onPressed: () => setState(() => _isOpen = !_isOpen),
+                  backgroundColor: _isOpen ? Colors.red : Colors.deepPurple,
+                  child: Icon(_isOpen ? Icons.close : Icons.bug_report, size: 20),
+                ),
+              ),
+            ],
           ),
         ),
       ],

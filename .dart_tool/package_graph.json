@@ -14,7 +14,7 @@
     },
     {
       "name": "tanquery",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "dependencies": [
         "meta"
       ],
@@ -36,7 +36,7 @@
     },
     {
       "name": "tanquery_devtools",
-      "version": "0.6.1",
+      "version": "0.6.2",
       "dependencies": [
         "flutter",
         "tanquery",
