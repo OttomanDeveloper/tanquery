@@ -1,5 +1,9 @@
 import 'query_storage.dart';
 
+/// Non-persistent [QueryStorage] backed by a plain [Map].
+///
+/// Useful for tests and as a default when no durable storage is configured.
+/// All data is lost when the process exits.
 class InMemoryQueryStorage implements QueryStorage {
   final Map<String, Map<String, dynamic>> _store = {};
 
@@ -24,5 +28,6 @@ class InMemoryQueryStorage implements QueryStorage {
     _store.clear();
   }
 
+  /// Number of entries currently held in memory.
   int get length => _store.length;
 }

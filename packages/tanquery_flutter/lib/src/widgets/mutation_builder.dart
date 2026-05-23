@@ -2,6 +2,10 @@ import 'package:flutter/widgets.dart';
 import 'package:tanquery/tanquery.dart';
 import '../provider.dart';
 
+/// Signature for the builder function passed to [MutationBuilder].
+///
+/// Receives the current [MutationState], a fire-and-forget [mutate] callback,
+/// and an async [mutateAsync] callback that returns the result or throws.
 typedef MutationWidgetBuilder<TData, TVariables> = Widget Function(
   BuildContext context,
   MutationState<TData> state,
@@ -9,16 +13,56 @@ typedef MutationWidgetBuilder<TData, TVariables> = Widget Function(
   Future<TData> Function(TVariables variables) mutateAsync,
 );
 
+/// Builds a widget that can trigger and track a mutation (create, update, delete).
+///
+/// The [builder] receives the current [MutationState] plus two callbacks:
+/// `mutate` (fire-and-forget) and `mutateAsync` (returns a Future).
+///
+/// ```dart
+/// MutationBuilder<Todo, CreateTodoInput>(
+///   mutationFn: (input) => api.createTodo(input),
+///   onSuccess: (data, variables, ctx) async {
+///     queryClient.invalidateQueries(QueryKey(['todos']));
+///   },
+///   builder: (context, state, mutate, mutateAsync) {
+///     return ElevatedButton(
+///       onPressed: state.isPending
+///           ? null
+///           : () => mutate(CreateTodoInput(title: 'New')),
+///       child: Text(state.isPending ? 'Saving...' : 'Add Todo'),
+///     );
+///   },
+/// )
+/// ```
 class MutationBuilder<TData, TVariables> extends StatefulWidget {
+  /// Function that performs the mutation. Receives [TVariables] and returns
+  /// a Future resolving to [TData].
   final MutationFn<TData, TVariables> mutationFn;
+
+  /// Builder called whenever the mutation state changes.
   final MutationWidgetBuilder<TData, TVariables> builder;
+
+  /// Optional scope for deduplication. Mutations in the same scope run serially.
   final MutationScope? scope;
+
+  /// Number of times to retry on failure. Defaults to 0 (no retries).
   final int retryCount;
+
+  /// Called before the mutation fires. Return value is passed as `context`
+  /// to [onSuccess], [onError], and [onSettled], useful for optimistic updates.
   final Future<Object?> Function(TVariables variables)? onMutate;
+
+  /// Called when the mutation succeeds. Receives the returned [data],
+  /// the [variables] that were passed in, and the [context] from [onMutate].
   final Future<void> Function(TData data, TVariables variables, Object? context)? onSuccess;
+
+  /// Called when the mutation fails.
   final Future<void> Function(Object error, TVariables variables, Object? context)? onError;
+
+  /// Called after the mutation finishes, regardless of success or failure.
   final Future<void> Function(TData? data, Object? error, TVariables variables, Object? context)? onSettled;
 
+  /// Creates a [MutationBuilder].
   const MutationBuilder({
     super.key,
     required this.mutationFn,

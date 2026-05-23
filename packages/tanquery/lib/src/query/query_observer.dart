@@ -9,27 +9,72 @@ import '../utils/time_utils.dart';
 import 'query.dart';
 import 'query_cache.dart';
 
+/// Snapshot of a query's state as seen by a [QueryObserver].
+///
+/// Combines raw [QueryState] fields with derived booleans (like [isLoading],
+/// [isRefetching]) and observer-specific state like [isPlaceholderData].
 class QueryObserverResult<TData> {
+  /// The latest successfully fetched data, or null if no data has arrived.
   final TData? data;
+
+  /// The error from the most recent failed fetch, or null.
   final Object? error;
+
+  /// Whether the query is pending, successful, or in an error state.
   final QueryStatus status;
+
+  /// Whether the query is actively fetching, paused, or idle.
   final FetchStatus fetchStatus;
+
+  /// True when no data exists yet and a fetch is in progress (first load).
   final bool isLoading;
+
+  /// True when a fetch is in progress, regardless of existing data.
   final bool isFetching;
+
+  /// True when the fetch is paused (usually waiting for network).
   final bool isPaused;
+
+  /// True when the query is in an error state.
   final bool isError;
+
+  /// True when the query has data and is in a success state.
   final bool isSuccess;
+
+  /// True when no data has arrived and no error has occurred.
   final bool isPending;
+
+  /// True when the query's data is stale according to the configured stale time.
   final bool isStale;
+
+  /// True when the displayed data comes from placeholder data rather than a fetch.
   final bool isPlaceholderData;
+
+  /// True if the query has completed at least one fetch (success or error).
   final bool isFetched;
+
+  /// True if a fetch completed after this observer subscribed.
   final bool isFetchedAfterMount;
+
+  /// True when refetching with existing data already present.
   final bool isRefetching;
+
+  /// True when in an error state with no data to fall back on.
   final bool isLoadingError;
+
+  /// True when in an error state but previous data is still available.
   final bool isRefetchError;
+
+  /// When the data was last updated, or null if no data has arrived.
   final DateTime? dataUpdatedAt;
+
+  /// Number of consecutive fetch failures.
   final int failureCount;
+
+  /// The error from the most recent failure, even during retries.
   final Object? failureReason;
+
+  /// Total number of times the query has entered the error state.
   final int errorUpdateCount;
 
   const QueryObserverResult({
@@ -57,8 +102,14 @@ class QueryObserverResult<TData> {
   });
 }
 
+/// Callback signature for [QueryObserver] subscribers.
 typedef QueryObserverListener<TData> = void Function(QueryObserverResult<TData> result);
 
+/// Bridges between a [Query] and UI listeners.
+///
+/// Subscribes to a query in the cache, computes [QueryObserverResult] on
+/// each state change, and notifies listeners only when the result actually
+/// differs. Also manages stale timers and refetch intervals.
 class QueryObserver<TData> extends Subscribable<Function> implements QueryUpdateCallback {
   final QueryCache _cache;
   final nm.NotifyManager _notifyManager;
@@ -89,6 +140,13 @@ class QueryObserver<TData> extends Subscribable<Function> implements QueryUpdate
   Timer? _staleTimer;
   Timer? _refetchTimer;
 
+  /// Creates an observer for the query identified by [queryKey].
+  ///
+  /// The observer immediately looks up (or creates) the query in [cache]
+  /// and computes an initial result. Set [enabled] to false to pause
+  /// automatic fetching. Use [select] to derive a subset of the data, and
+  /// [placeholderData] or [placeholderDataFn] to show temporary data while
+  /// the first fetch is in progress.
   QueryObserver({
     required QueryCache cache,
     required QueryKey queryKey,
@@ -122,6 +180,7 @@ class QueryObserver<TData> extends Subscribable<Function> implements QueryUpdate
     updateResult();
   }
 
+  /// The most recently computed result snapshot.
   QueryObserverResult<TData> get currentResult => _currentResult;
 
   // --- Subscribable lifecycle ---
@@ -173,6 +232,8 @@ class QueryObserver<TData> extends Subscribable<Function> implements QueryUpdate
 
   // --- Result computation ---
 
+  /// Recomputes the result from the current query state and notifies
+  /// listeners if anything changed.
   void updateResult() {
     final prevResult = _currentResult;
     _currentResult = _createResult();
@@ -379,6 +440,7 @@ class QueryObserver<TData> extends Subscribable<Function> implements QueryUpdate
 
   // --- Cleanup ---
 
+  /// Tears down timers and detaches from the observed query.
   void destroy() {
     _staleTimer?.cancel();
     _staleTimer = null;

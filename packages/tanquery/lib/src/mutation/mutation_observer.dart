@@ -5,8 +5,14 @@ import '../models/types.dart';
 import 'mutation.dart';
 import 'mutation_cache.dart';
 
+/// Callback signature for [MutationObserver] subscribers.
 typedef MutationObserverListener = void Function(MutationState state);
 
+/// Bridges between a [Mutation] and UI listeners.
+///
+/// Provides [mutate] and [mutateAsync] to trigger mutations, with optional
+/// per-call callbacks. Subscribers are notified with the latest
+/// [MutationState] on each state change.
 class MutationObserver<TData, TVariables> extends Subscribable<MutationObserverListener> {
   final MutationCache _cache;
   final nm.NotifyManager _notifyManager;
@@ -28,13 +34,22 @@ class MutationObserver<TData, TVariables> extends Subscribable<MutationObserverL
         _notifyManager = notifyManager ?? nm.notifyManager,
         _currentResult = MutationState<TData>();
 
+  /// The most recent mutation state snapshot.
   MutationState<TData> get currentResult => _currentResult;
+
+  /// The current configuration for this observer's mutations.
   MutationConfig<TData, TVariables> get config => _config;
 
+  /// Replaces the mutation configuration. Takes effect on the next [mutate] call.
   void setConfig(MutationConfig<TData, TVariables> config) {
     _config = config;
   }
 
+  /// Triggers a mutation with the given [variables]. Does not throw on failure.
+  ///
+  /// Creates a new [Mutation] in the cache, attaches this observer, and
+  /// starts execution. Optional per-call [onSuccess], [onError], and
+  /// [onSettled] callbacks fire in addition to the config-level callbacks.
   void mutate(
     TVariables variables, {
     void Function(TData data, TVariables variables, Object? context)? onSuccess,
@@ -52,6 +67,8 @@ class MutationObserver<TData, TVariables> extends Subscribable<MutationObserverL
     _currentMutation!.execute(variables).then((_) {}, onError: (_) {});
   }
 
+  /// Like [mutate], but returns a Future that resolves with the result or
+  /// throws on failure. Use when you need to await the mutation outcome.
   Future<TData> mutateAsync(
     TVariables variables, {
     void Function(TData data, TVariables variables, Object? context)? onSuccess,
@@ -69,6 +86,7 @@ class MutationObserver<TData, TVariables> extends Subscribable<MutationObserverL
     return _currentMutation!.execute(variables);
   }
 
+  /// Detaches from the current mutation and resets state to idle.
   void reset() {
     _currentMutation?.removeObserver(_onMutationUpdate);
     _currentMutation = null;

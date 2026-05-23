@@ -2,6 +2,10 @@ import 'package:flutter/widgets.dart';
 import 'package:tanquery/tanquery.dart';
 import '../provider.dart';
 
+/// Signature for the builder function passed to [InfiniteQueryBuilder].
+///
+/// Receives the current query [state] containing [InfiniteData], plus
+/// [fetchNextPage] and [fetchPreviousPage] callbacks to load more pages.
 typedef InfiniteQueryWidgetBuilder<TPage, TParam> = Widget Function(
   BuildContext context,
   QueryObserverResult<InfiniteData<TPage, TParam>> state,
@@ -9,21 +13,70 @@ typedef InfiniteQueryWidgetBuilder<TPage, TParam> = Widget Function(
   void Function() fetchPreviousPage,
 );
 
+/// Builds a widget for paginated queries that load data page by page.
+///
+/// Fetches an initial page on mount, then exposes [fetchNextPage] and
+/// [fetchPreviousPage] callbacks through the builder for loading more.
+/// Pages are stored as [InfiniteData] in the query cache.
+///
+/// ```dart
+/// InfiniteQueryBuilder<List<Post>, int>(
+///   queryKey: QueryKey(['posts']),
+///   queryFn: (page) => api.getPosts(page: page),
+///   initialPageParam: 1,
+///   getNextPageParam: (lastPage, allPages, lastParam, allParams) {
+///     return lastPage.isEmpty ? null : lastParam + 1;
+///   },
+///   builder: (context, state, fetchNextPage, fetchPreviousPage) {
+///     final posts = state.data?.pages.expand((p) => p).toList() ?? [];
+///     return ListView.builder(
+///       itemCount: posts.length,
+///       itemBuilder: (_, i) => PostTile(posts[i]),
+///     );
+///   },
+/// )
+/// ```
 class InfiniteQueryBuilder<TPage, TParam> extends StatefulWidget {
+  /// Unique key identifying this query in the cache.
   final QueryKey queryKey;
+
+  /// Fetches a single page of data given a [pageParam].
   final Future<TPage> Function(TParam pageParam) queryFn;
+
+  /// The page parameter used for the first fetch.
   final TParam initialPageParam;
+
+  /// Returns the param for the next page, or `null` if there are no more pages.
+  /// Receives the last page, all loaded pages, the last param, and all params.
   final TParam? Function(TPage lastPage, List<TPage> allPages, TParam lastParam, List<TParam> allParams)?
       getNextPageParam;
+
+  /// Returns the param for the previous page, or `null` if at the beginning.
+  /// Receives the first page, all loaded pages, the first param, and all params.
   final TParam? Function(TPage firstPage, List<TPage> allPages, TParam firstParam, List<TParam> allParams)?
       getPreviousPageParam;
+
+  /// Builder called whenever the query state changes. Receives
+  /// [fetchNextPage] and [fetchPreviousPage] callbacks for loading more data.
   final InfiniteQueryWidgetBuilder<TPage, TParam> builder;
+
+  /// How long fetched data is considered fresh. Defaults to [Duration.zero].
   final Duration staleTime;
+
+  /// How long inactive query data stays in the cache. Defaults to 5 minutes.
   final Duration gcTime;
+
+  /// Whether the query should automatically fetch on mount.
   final bool enabled;
+
+  /// Number of retry attempts on failure. Defaults to 3.
   final int retryCount;
+
+  /// Maximum number of pages to keep in memory. Oldest pages are dropped
+  /// when fetching forward, newest when fetching backward. `null` means no limit.
   final int? maxPages;
 
+  /// Creates an [InfiniteQueryBuilder] for paginated data.
   const InfiniteQueryBuilder({
     super.key,
     required this.queryKey,

@@ -1,3 +1,10 @@
+/// Recursively compares [a] and [b], reusing references from [a] wherever
+/// the values are deeply equal.
+///
+/// This preserves object identity for unchanged subtrees, which helps
+/// downstream listeners avoid unnecessary rebuilds. If the entire structure
+/// is equal, returns [a] directly. Bails out at [depth] > 500 to prevent
+/// stack overflow on pathological inputs.
 Object? replaceEqualDeep(Object? a, Object? b, {int depth = 0}) {
   if (identical(a, b)) return a;
   if (depth > 500) return b;

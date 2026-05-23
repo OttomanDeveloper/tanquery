@@ -1,3 +1,8 @@
+## 0.7.1
+
+### Documentation
+- Added dartdoc comments to DartQueryDevtools widget and its public properties, with MaterialApp.builder usage example.
+
 ## 0.7.0
 
 ### Bug Fixes

@@ -6,10 +6,32 @@ import 'query_list_view.dart';
 import 'query_detail_view.dart';
 import 'mutation_log_view.dart';
 
+/// Floating overlay panel for inspecting query and mutation state at runtime.
+///
+/// Renders a small FAB in the bottom-right corner. Tapping it opens a panel
+/// listing all cached queries and mutations with their current status.
+/// You can filter, inspect, invalidate, refetch, and remove queries from
+/// the panel.
+///
+/// Wrap your app with this widget, typically inside `MaterialApp.builder`:
+///
+/// ```dart
+/// MaterialApp(
+///   builder: (context, child) => DartQueryDevtools(child: child!),
+/// )
+/// ```
+///
+/// Set [enabled] to `false` (e.g. in release mode) to skip rendering
+/// the overlay entirely.
 class DartQueryDevtools extends StatefulWidget {
+  /// Whether the devtools overlay is active. When `false`, [child] is
+  /// rendered directly with no overlay or FAB.
   final bool enabled;
+
+  /// The app content displayed behind the devtools panel.
   final Widget child;
 
+  /// Creates a devtools overlay. Defaults to [enabled] = `true`.
   const DartQueryDevtools({
     super.key,
     this.enabled = true,

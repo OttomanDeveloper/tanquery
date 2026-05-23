@@ -1,16 +1,38 @@
 import 'types.dart';
 
+/// Immutable snapshot of a mutation's current state.
+///
+/// Tracks the [data] returned on success, any [error], retry counts,
+/// and the [variables] that were passed to the mutation function.
 class MutationState<TData> {
+  /// The data returned by the mutation function, or null if not yet completed.
   final TData? data;
+
+  /// The error from the last failed mutation attempt, or null on success.
   final Object? error;
+
+  /// Current mutation status.
   final MutationStatus status;
+
+  /// Number of consecutive failures.
   final int failureCount;
+
+  /// The error that caused the most recent failure.
   final Object? failureReason;
+
+  /// Whether the mutation is paused waiting for network.
   final bool isPaused;
+
+  /// The input variables passed to the mutation function.
   final Object? variables;
+
+  /// User-defined context passed through mutation lifecycle callbacks.
   final Object? context;
+
+  /// When the mutation was submitted.
   final DateTime? submittedAt;
 
+  /// Creates a mutation state with the given values.
   const MutationState({
     this.data,
     this.error,
@@ -23,11 +45,19 @@ class MutationState<TData> {
     this.submittedAt,
   });
 
+  /// True when the mutation has not been triggered.
   bool get isIdle => status == MutationStatus.idle;
+
+  /// True when the mutation is running.
   bool get isPending => status == MutationStatus.pending;
+
+  /// True when the mutation failed.
   bool get isError => status == MutationStatus.error;
+
+  /// True when the mutation completed successfully.
   bool get isSuccess => status == MutationStatus.success;
 
+  /// Returns a copy with the specified fields replaced.
   MutationState<TData> copyWith({
     TData? Function()? data,
     Object? Function()? error,

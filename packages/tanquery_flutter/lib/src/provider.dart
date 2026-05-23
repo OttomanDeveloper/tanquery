@@ -2,10 +2,26 @@ import 'package:flutter/widgets.dart';
 import 'package:tanquery/tanquery.dart' as dq;
 import 'package:tanquery/tanquery.dart' show QueryClient;
 
+/// Provides a [QueryClient] to the widget tree.
+///
+/// Place this near the root of your app, above any widgets that use
+/// [QueryBuilder] or [MutationBuilder]. Handles mounting/unmounting
+/// the client and forwarding app lifecycle events to [FocusManager].
+///
+/// ```dart
+/// DartQueryProvider(
+///   client: QueryClient(),
+///   child: MaterialApp(...),
+/// )
+/// ```
 class DartQueryProvider extends StatefulWidget {
+  /// The [QueryClient] instance shared with all descendant widgets.
   final QueryClient client;
+
+  /// The widget subtree that will have access to [client].
   final Widget child;
 
+  /// Creates a provider that makes [client] available to the widget tree.
   const DartQueryProvider({
     super.key,
     required this.client,
@@ -80,7 +96,12 @@ class _DartQueryInherited extends InheritedWidget {
   }
 }
 
+/// Static accessor for the nearest [QueryClient] in the widget tree.
 class DartQuery {
+  /// Looks up the nearest [QueryClient] from the widget tree.
+  ///
+  /// Throws a [FlutterError] with setup instructions if no
+  /// [DartQueryProvider] is found above this context.
   static QueryClient of(BuildContext context) {
     final widget =
         context.dependOnInheritedWidgetOfExactType<_DartQueryInherited>();

@@ -6,10 +6,18 @@ import '../models/mutation_state.dart';
 import '../models/types.dart';
 import 'mutation.dart';
 
+/// Describes a lifecycle event emitted by the [MutationCache].
 class MutationCacheEvent {
+  /// What happened (added, removed, updated, observerAdded, observerRemoved).
   final EventType type;
+
+  /// The mutation this event relates to.
   final Mutation mutation;
+
+  /// For update events, the action that triggered the state change.
   final Object? action;
+
+  /// For observer events, the observer that was added or removed.
   final Object? observer;
 
   const MutationCacheEvent({
@@ -20,8 +28,13 @@ class MutationCacheEvent {
   });
 }
 
+/// Callback signature for [MutationCache] event listeners.
 typedef MutationCacheListener = void Function(MutationCacheEvent event);
 
+/// In-memory store of all active mutations, with scope-based serialization.
+///
+/// Builds new mutations, manages their lifecycle, and ensures scoped
+/// mutations execute one at a time within each scope.
 class MutationCache extends Subscribable<MutationCacheListener> {
   final Set<Mutation> _mutations = {};
   final Map<String, List<Mutation>> _scopes = {};
@@ -30,9 +43,16 @@ class MutationCache extends Subscribable<MutationCacheListener> {
   final fm.FocusManager _focusManager;
   final om.OnlineManager _onlineManager;
 
+  /// Called when any mutation in the cache fails.
   final void Function(Object error, Object? variables, Object? context, Mutation mutation)? onError;
+
+  /// Called when any mutation in the cache succeeds.
   final void Function(Object? data, Object? variables, Object? context, Mutation mutation)? onSuccess;
+
+  /// Called before any mutation in the cache starts executing.
   final void Function(Object? variables, Mutation mutation)? onMutate;
+
+  /// Called after any mutation in the cache finishes, regardless of outcome.
   final void Function(Object? data, Object? error, Object? variables, Object? context, Mutation mutation)? onSettled;
 
   MutationCache({
@@ -47,6 +67,11 @@ class MutationCache extends Subscribable<MutationCacheListener> {
         _focusManager = focusManager ?? fm.focusManager,
         _onlineManager = onlineManager ?? om.onlineManager;
 
+  /// Creates a new [Mutation] with the given [config] and adds it to the cache.
+  ///
+  /// Unlike [QueryCache.build], each call always creates a fresh mutation.
+  /// The mutation is automatically wired up with scope checks and cache
+  /// callbacks.
   Mutation<TData, TVariables> build<TData, TVariables>({
     required MutationConfig<TData, TVariables> config,
     MutationState<TData>? state,
@@ -92,6 +117,7 @@ class MutationCache extends Subscribable<MutationCacheListener> {
     _notify(MutationCacheEvent(type: EventType.added, mutation: mutation));
   }
 
+  /// Removes a mutation from the cache and destroys it.
   void remove(Mutation mutation) {
     _mutations.remove(mutation);
     final scopeId = mutation.scope?.id;
@@ -105,6 +131,10 @@ class MutationCache extends Subscribable<MutationCacheListener> {
     _notify(MutationCacheEvent(type: EventType.removed, mutation: mutation));
   }
 
+  /// Returns true if the given [mutation] can execute now.
+  ///
+  /// Unscoped mutations always return true. Scoped mutations can only run
+  /// if they are the first pending mutation in their scope's queue.
   bool canRun(Mutation mutation) {
     final scopeId = mutation.scope?.id;
     if (scopeId == null) return true;
@@ -116,6 +146,8 @@ class MutationCache extends Subscribable<MutationCacheListener> {
     return firstPending == null || identical(firstPending, mutation);
   }
 
+  /// Finds the next paused mutation in the same scope as [completedMutation]
+  /// and resumes it. Called automatically after a scoped mutation finishes.
   void runNext(Mutation completedMutation) {
     final scopeId = completedMutation.scope?.id;
     if (scopeId == null) return;
@@ -127,6 +159,8 @@ class MutationCache extends Subscribable<MutationCacheListener> {
     next?.continueExecution();
   }
 
+  /// Resumes all paused mutations in parallel. Typically called when
+  /// network connectivity is restored.
   Future<void> resumePausedMutations() async {
     final paused = getAll().where((m) => m.state.isPaused).toList();
     await Future.wait(
@@ -138,8 +172,13 @@ class MutationCache extends Subscribable<MutationCacheListener> {
     );
   }
 
+  /// Returns all mutations currently in the cache.
   List<Mutation> getAll() => _mutations.toList();
 
+  /// Returns mutations matching the given filters.
+  ///
+  /// Filter by [status] and/or a custom [predicate]. With no filters,
+  /// returns everything.
   List<Mutation> findAll({
     MutationStatus? status,
     bool Function(Mutation)? predicate,
@@ -154,6 +193,7 @@ class MutationCache extends Subscribable<MutationCacheListener> {
     return results;
   }
 
+  /// Removes and destroys all mutations in the cache.
   void clear() {
     _notifyManager.batch(() {
       for (final mutation in getAll()) {

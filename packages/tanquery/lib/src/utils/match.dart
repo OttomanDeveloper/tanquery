@@ -1,3 +1,7 @@
+/// Returns true if every entry in [b] exists in [a] with the same value.
+///
+/// Works recursively on nested Maps and Lists. Useful for matching
+/// queries by a subset of their key parts.
 bool partialMatchKey(Object? a, Object? b) {
   if (identical(a, b)) return true;
   if (a == b) return true;

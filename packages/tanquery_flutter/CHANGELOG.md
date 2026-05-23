@@ -1,3 +1,8 @@
+## 0.7.1
+
+### Documentation
+- Added dartdoc comments to all public APIs: widgets, typedefs, widget properties, and constructors. Includes usage examples for QueryBuilder, MutationBuilder, InfiniteQueryBuilder, and QueriesBuilder.
+
 ## 0.7.0
 
 ### Bug Fixes

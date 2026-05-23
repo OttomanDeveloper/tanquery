@@ -11,19 +11,42 @@ import '../retryer/retryer.dart';
 import '../utils/structural_sharing.dart';
 import '../utils/skip_token.dart';
 
+/// Async function that fetches data for a query.
 typedef QueryFn<T> = Future<T> Function();
 
+/// Interface for objects that want to observe a [Query]'s state changes.
+///
+/// Implemented by [QueryObserver] to receive notifications when a query's
+/// state transitions (data arrival, errors, refetches).
 abstract class QueryUpdateCallback {
+  /// Called whenever the query's state changes.
   void onQueryUpdate();
+
+  /// Whether this observer wants to trigger a refetch when the window regains focus.
   bool shouldFetchOnWindowFocus() => false;
+
+  /// Whether this observer wants to trigger a refetch on network reconnect.
   bool shouldFetchOnReconnect() => false;
+
+  /// Triggers a refetch of the observed query.
   Future<void> refetch({bool cancelRefetch});
 }
 
+/// Callback the [QueryCache] provides so the [Query] can emit lifecycle events
+/// (added, removed, updated) back to cache-level listeners.
 typedef CacheNotifyFn = void Function(Object event);
 
+/// Manages a single query's lifecycle: fetching, caching, retrying, and
+/// garbage collection.
+///
+/// Queries use a reducer-based state machine with two axes: [QueryStatus]
+/// tracks whether data has arrived (pending/success/error) while [FetchStatus]
+/// tracks the network request (fetching/paused/idle).
 class Query<TData> extends Removable {
+  /// The structured key that identifies this query.
   final QueryKey queryKey;
+
+  /// Hash derived from [queryKey], used as the cache lookup key.
   final String queryHash;
   final nm.NotifyManager _notifyManager;
   final fm.FocusManager _focusManager;
@@ -31,6 +54,7 @@ class Query<TData> extends Removable {
 
   CacheNotifyFn? _cacheNotify;
 
+  /// Current state of this query, including data, error, and status flags.
   QueryState<TData> state;
   QueryState<TData> _initialState;
   QueryState<TData>? _revertState;
@@ -38,17 +62,37 @@ class Query<TData> extends Removable {
   final List<QueryUpdateCallback> _observers = [];
   Retryer<TData>? _retryer;
 
+  /// Called when the query is removed from the cache during garbage collection.
   void Function()? onRemove;
 
+  /// The async function used to fetch data. Can be swapped via [setOptions].
   QueryFn<TData>? queryFn;
+
+  /// Number of times to retry a failed fetch before giving up.
   int retryCount;
+
+  /// Returns the delay before the [n]th retry attempt.
   Duration Function(int) retryDelay;
+
+  /// Optional predicate that controls whether a given error should be retried.
   bool Function(Object)? retryCondition;
+
+  /// Controls fetch behavior relative to network availability.
   NetworkMode networkMode;
+
+  /// When true, new data is compared against existing data and references
+  /// are preserved for unchanged portions. Reduces unnecessary rebuilds.
   bool structuralSharing;
   String? _queryType;
+
+  /// Arbitrary metadata attached to this query, accessible from cache listeners.
   Map<String, Object?>? meta;
 
+  /// Creates a query with the given [queryKey] and [queryHash].
+  ///
+  /// Optionally provide [initialData] to pre-populate the query's state
+  /// without triggering a fetch. The [gcTime] controls how long the query
+  /// stays in the cache after all observers unsubscribe.
   Query({
     required this.queryKey,
     required this.queryHash,
@@ -96,10 +140,12 @@ class Query<TData> extends Removable {
 
   // --- Getters ---
 
+  /// Optional label grouping queries by type (e.g. "infinite", "paginated").
   String? get queryType => _queryType;
 
   // --- Options ---
 
+  /// Updates query options in place. Only non-null parameters are applied.
   void setOptions({
     QueryFn<TData>? queryFn,
     int? retryCount,
@@ -124,6 +170,11 @@ class Query<TData> extends Removable {
 
   // --- State Machine ---
 
+  /// Stores [newData] in the query state and notifies observers.
+  ///
+  /// When [structuralSharing] is enabled, unchanged portions keep their
+  /// original references. Set [manual] to true for programmatic updates
+  /// (e.g. from [QueryClient.setQueryData]) that shouldn't clear fetch state.
   TData setData(TData newData, {DateTime? updatedAt, bool manual = false}) {
     final TData data;
     if (structuralSharing) {
@@ -137,10 +188,12 @@ class Query<TData> extends Removable {
     return data;
   }
 
+  /// Replaces the entire query state. Use sparingly, prefer [setData].
   void setState(QueryState<TData> newState) {
     _dispatch(_QueryAction.setState(newState));
   }
 
+  /// Marks this query as stale. Active observers will refetch on next check.
   void invalidate() {
     if (!state.isInvalidated) {
       _dispatch(_QueryAction.invalidate());
@@ -225,6 +278,11 @@ class Query<TData> extends Removable {
 
   // --- Fetch ---
 
+  /// Executes the [queryFn] and updates state through the reducer.
+  ///
+  /// If a fetch is already in-flight, [cancelRefetch] controls whether
+  /// the existing request is cancelled (true) or reused (false).
+  /// Returns the fetched data on success, throws on error.
   Future<TData> fetch({
     bool cancelRefetch = true,
     Map<String, Object?>? meta,
@@ -282,6 +340,10 @@ class Query<TData> extends Removable {
     }
   }
 
+  /// Cancels the in-flight fetch, if any.
+  ///
+  /// When [revert] is true, the state rolls back to before the fetch started.
+  /// When [silent] is true, the cancellation does not trigger error handling.
   Future<void> cancel({bool revert = false, bool silent = false}) async {
     _retryer?.cancel(revert: revert, silent: silent);
     try {
@@ -295,6 +357,8 @@ class Query<TData> extends Removable {
     _retryer?.cancel(silent: true);
   }
 
+  /// Resets the query to its initial state, cancelling any in-flight fetch
+  /// and restarting garbage collection.
   void reset() {
     destroy();
     _dispatch(_QueryAction.setState(_initialState));
@@ -303,6 +367,10 @@ class Query<TData> extends Removable {
 
   // --- Staleness ---
 
+  /// Returns true if the query's data is stale relative to [staleTime].
+  ///
+  /// A query with no data is always stale. Invalidated queries are always
+  /// stale regardless of [staleTime]. Accepts a [Duration] or [StaleTime].
   bool isStaleByTime(Object staleTime) {
     if (state.data == null) return true;
     if (staleTime is StaleTime && staleTime.isStatic) return false;
@@ -314,17 +382,22 @@ class Query<TData> extends Removable {
     return elapsed >= duration;
   }
 
+  /// True when at least one observer is subscribed.
   bool isActive() => _observers.isNotEmpty;
 
+  /// True when no observers are watching and either the query function is
+  /// a skip token or no fetch has been attempted yet.
   bool isDisabled() {
     if (_observers.isNotEmpty) return false;
     return isSkipToken(queryFn) || !isFetched();
   }
 
+  /// True if at least one fetch attempt has completed (success or error).
   bool isFetched() => state.dataUpdateCount + state.errorUpdateCount > 0;
 
   // --- Observers ---
 
+  /// Registers an observer. Stops garbage collection while observers exist.
   void addObserver(QueryUpdateCallback observer) {
     if (!_observers.contains(observer)) {
       _observers.add(observer);
@@ -337,6 +410,8 @@ class Query<TData> extends Removable {
     }
   }
 
+  /// Unregisters an observer. When the last observer is removed, retry is
+  /// cancelled and garbage collection is scheduled.
   void removeObserver(QueryUpdateCallback observer) {
     if (!_observers.contains(observer)) return;
     _observers.remove(observer);
@@ -351,11 +426,16 @@ class Query<TData> extends Removable {
     });
   }
 
+  /// Number of observers currently subscribed to this query.
   int get observerCount => _observers.length;
+
+  /// The initial state this query was created with, used by [reset].
   QueryState<TData> get resetState => _initialState;
 
   // --- Events ---
 
+  /// Called when the app window regains focus. Triggers a refetch if any
+  /// observer opts in via [QueryUpdateCallback.shouldFetchOnWindowFocus].
   void onFocus() {
     final observer = _observers
         .cast<QueryUpdateCallback?>()
@@ -364,6 +444,8 @@ class Query<TData> extends Removable {
     _retryer?.resume();
   }
 
+  /// Called when network connectivity is restored. Triggers a refetch if
+  /// any observer opts in via [QueryUpdateCallback.shouldFetchOnReconnect].
   void onOnline() {
     final observer = _observers
         .cast<QueryUpdateCallback?>()

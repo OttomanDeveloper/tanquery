@@ -8,10 +8,21 @@ import '../utils/hash_key.dart';
 import '../utils/match.dart';
 import 'query.dart';
 
+/// Describes a lifecycle event emitted by the [QueryCache].
+///
+/// Listeners receive these when queries are added, removed, updated,
+/// or when observers attach/detach.
 class QueryCacheEvent {
+  /// What happened (added, removed, updated, observerAdded, observerRemoved).
   final EventType type;
+
+  /// The query this event relates to.
   final Query query;
+
+  /// For [EventType.updated], the action that triggered the state change.
   final Object? action;
+
+  /// For observer events, the observer that was added or removed.
   final Object? observer;
 
   const QueryCacheEvent({
@@ -22,16 +33,26 @@ class QueryCacheEvent {
   });
 }
 
+/// Callback signature for [QueryCache] event listeners.
 typedef QueryCacheListener = void Function(QueryCacheEvent event);
 
+/// In-memory store of all active queries, keyed by their hash.
+///
+/// Handles building new queries (or returning existing ones), partial key
+/// matching for bulk operations, and forwarding lifecycle events to listeners.
 class QueryCache extends Subscribable<QueryCacheListener> {
   final Map<String, Query> _queries = {};
   final nm.NotifyManager _notifyManager;
   final fm.FocusManager? _focusManager;
   final om.OnlineManager? _onlineManager;
 
+  /// Called after a query transitions to the success state.
   final void Function(Object? data, Query query)? onSuccess;
+
+  /// Called after a query transitions to the error state.
   final void Function(Object? error, Query query)? onError;
+
+  /// Called after a query reaches either success or error state.
   final void Function(Object? data, Object? error, Query query)? onSettled;
 
   QueryCache({
@@ -45,6 +66,10 @@ class QueryCache extends Subscribable<QueryCacheListener> {
         _focusManager = focusManager,
         _onlineManager = onlineManager;
 
+  /// Returns an existing query matching [queryKey], or creates a new one.
+  ///
+  /// If the query already exists, its options are not overwritten. Use
+  /// [Query.setOptions] to update options on an existing query.
   Query<TData> build<TData>({
     required QueryKey queryKey,
     QueryFn<TData>? queryFn,
@@ -95,6 +120,7 @@ class QueryCache extends Subscribable<QueryCacheListener> {
     }
   }
 
+  /// Destroys a query and removes it from the cache.
   void remove(Query query) {
     final existing = _queries[query.queryHash];
     if (existing != null) {
@@ -106,6 +132,7 @@ class QueryCache extends Subscribable<QueryCacheListener> {
     }
   }
 
+  /// Removes and destroys all queries in the cache.
   void clear() {
     _notifyManager.batch(() {
       for (final query in getAll()) {
@@ -114,10 +141,17 @@ class QueryCache extends Subscribable<QueryCacheListener> {
     });
   }
 
+  /// Looks up a single query by its exact [queryHash]. Returns null if not found.
   Query? get(String queryHash) => _queries[queryHash];
 
+  /// Returns all queries currently in the cache as a list.
   List<Query> getAll() => _queries.values.toList();
 
+  /// Finds the first query matching the given filters, or null if none match.
+  ///
+  /// When [exact] is true, the [queryKey] must match exactly. Otherwise,
+  /// partial key matching is used (the query just needs to start with
+  /// the provided key parts).
   Query? find({
     QueryKey? queryKey,
     bool exact = true,
@@ -140,6 +174,11 @@ class QueryCache extends Subscribable<QueryCacheListener> {
         );
   }
 
+  /// Returns all queries matching the given filters.
+  ///
+  /// With no filters, returns everything. Supports filtering by [queryKey]
+  /// (partial match by default), [type] (active/inactive/all), [stale] status,
+  /// [fetchStatus], and a custom [predicate].
   List<Query> findAll({
     QueryKey? queryKey,
     bool exact = false,
@@ -239,6 +278,7 @@ class QueryCache extends Subscribable<QueryCacheListener> {
     }
   }
 
+  /// Notifies all cached queries that the app window regained focus.
   void onFocus() {
     _notifyManager.batch(() {
       for (final query in getAll()) {
@@ -247,6 +287,7 @@ class QueryCache extends Subscribable<QueryCacheListener> {
     });
   }
 
+  /// Notifies all cached queries that network connectivity was restored.
   void onOnline() {
     _notifyManager.batch(() {
       for (final query in getAll()) {

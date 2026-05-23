@@ -1,3 +1,8 @@
+## 0.7.1
+
+### Documentation
+- Added dartdoc comments to all public APIs: classes, methods, fields, typedefs, enums, enum values, constructors, and top-level functions.
+
 ## 0.7.0
 
 ### Bug Fixes
